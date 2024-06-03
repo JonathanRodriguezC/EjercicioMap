@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mapa de Tiendas en El Salvador con Leaflet y Mapbox</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body {
+            background-color: rgb(196, 196, 196);
+        }
+
+        #map {
+            height: 600px;
+        }
+
+        #form {
+            margin: 20px;
+            padding: 1%;
+            border: solid 2px;
+            background-color: rgb(228, 228, 228);
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Mapa de Tiendas XYZ en El Salvador</h1>
+    <div id="map"></div>
+    <div id="form">
+        <h1>Agregar una flota</h1>
+        <input type="text" id="idf" placeholder="Numero de flota">
+        <input type="text" id="address" placeholder="Ubicacion">
+        <input type="text" id="ruta" placeholder="En ruta o sin Ruta">
+        <input type="text" id="gasolina" placeholder="nivel de gasolina en %">
+        <input type="text" id="velocidad" placeholder="km/h de velocidad promedio">
+        <input type="text" id="kmflota" placeholder="km de la flota">
+
+        <button onclick="addStore()">Agregar Ruta</button>
+    </div>
+
+    <div id="flotaList"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([13.698, -89.191], 12);  // Coordenadas de San Salvador, El Salvador
+        var accessToken = 'pk.eyJ1Ijoid2lsbGl3b25rYSIsImEiOiJjbHdyYnVhMDIwOGd5MmlvZ3lsZnRsbTg0In0.bSSPmW9wZJj0mqVX6z3Wsg';
+
+        L.tileLayer(`https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=${accessToken}`, {
+            id: 'mapbox/streets-v11',
+            tileSize: 512,
+            zoomOffset: -1,
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+                '<a href="https://www.mapbox.com/">Mapbox</a>'
+        }).addTo(map);
+
+        function addStore() {
+            var idf = document.getElementById('idf').value;
+            var address = document.getElementById('address').value;
+            var ruta = document.getElementById('ruta').value;
+            var gasolina = document.getElementById('gasolina').value;
+            var velocidad = document.getElementById('velocidad').value;
+            var kmflota = document.getElementById('kmflota').value;
+
+            fetch('/add-store', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ idf, address, ruta, gasolina, velocidad, kmflota })
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    loadStores();
+                });
+        }
+
+        function updateStore(id) {
+            console.log("Entro al put")
+            var idf = id;
+            console.log(idf)
+            var address = document.getElementById(`address-${id}`).value;
+            var ruta = document.getElementById(`ruta-${id}`).value;
+            var gasolina = document.getElementById(`gasolina-${id}`).value;
+            var velocidad = document.getElementById(`velocidad-${id}`).value;
+            var kmflota = document.getElementById(`kmflota-${id}`).value;
+
+            fetch(`/update-store/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ address, ruta, gasolina, velocidad, kmflota })
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                    loadStores();
+                });
+        }
+
+        function loadStores() {
+            var flotaList = document.getElementById('flotaList');
+            flotaList.innerHTML = '';
+            fetch('/stores')
+                .then(response => response.json())
+                .then(stores => {
+                    // Limpiar todos los marcadores actuales
+                    map.eachLayer((layer) => {
+                        if (layer instanceof L.Marker) {
+                            map.removeLayer(layer);
+                        }
+                    });
+
+                    // Agregar marcadores para todas las tiendas
+                    stores.forEach(store => {
+                        const popupContent = `<b>Numero de flota:</b>${store.idf}<br><b>Ubicacion:</b> ${store.address}<br>
+                        <b>Coordenadas:</b> ${store.coordinates}<br><b>Ruta:</b> ${store.ruta}<br><b>gasolina:</b> ${store.gasolina}<br><b>velocidad:</b> ${store.velocidad}<br><b>kmflota:</b> ${store.kmflota}`;
+                        L.marker([store.coordinates[1], store.coordinates[0]])
+                            .addTo(map)
+                            .bindPopup(popupContent)
+                            .openPopup();
+
+                        //listado de flota
+
+                        var flotaItem = document.createElement('div');
+                        flotaItem.innerHTML = `
+                            <h3>Numero de flota: ${store.idf}</h3>
+                            <input type="text" id="address-${store.idf}" value="${store.address}" placeholder="Ubicacion">
+                            <input type="text" id="ruta-${store.idf}" value="${store.ruta}" placeholder="En ruta o sin Ruta">
+                            <input type="text" id="gasolina-${store.idf}" value="${store.gasolina}" placeholder="nivel de gasolina en %">
+                            <input type="text" id="velocidad-${store.idf}" value="${store.velocidad}" placeholder="km de velocidad promedio">
+                            <input type="text" id="kmflota-${store.idf}" value="${store.kmflota}" placeholder="km de la flota">
+                            <button onclick="updateStore(${store.idf})">Actualizar Ruta</button>
+                            <hr>
+                        `;
+                        flotaList.appendChild(flotaItem);
+
+                    });
+                });
+        }
+
+        // Cargar las tiendas al iniciar la página
+        window.onload = loadStores;
+    </script>
+</body>
+
+</html>

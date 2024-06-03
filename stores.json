@@ -1,0 +1,38 @@
+[
+  {
+    "idf": "1",
+    "address": "El salvador,San Salvador metrocentro",
+    "coordinates": [
+      -89.213274,
+      13.706235
+    ],
+    "ruta": "sin ruta",
+    "gasolina": "30%",
+    "velocidad": "80km",
+    "kmflota": "90000km"
+  },
+  {
+    "idf": "2",
+    "address": "El Salvador,soyapango, plaza mundo",
+    "coordinates": [
+      -89.15153,
+      13.70007
+    ],
+    "ruta": "sin ruta",
+    "gasolina": "30%",
+    "velocidad": "80km/h",
+    "kmflota": "200000km"
+  },
+  {
+    "idf": "3",
+    "address": "El salvador, Santa tecla, Residencial San Rafel",
+    "coordinates": [
+      -89.2975854,
+      13.6800759
+    ],
+    "ruta": "sin ruta",
+    "gasolina": "50%",
+    "velocidad": "60%",
+    "kmflota": "60000"
+  }
+]
